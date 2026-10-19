@@ -1,0 +1,200 @@
+# Kubernetes mounts runtime config as a file. Secrets stay in environment
+# variables so database topology is reviewable without exposing passwords.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: echo-admin-runtime
+  labels:
+    app.kubernetes.io/name: echo-admin
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: echo-admin
+data:
+  config.toml: |
+    [app]
+    name = "echo-admin"
+    version = "dev"
+
+    [system]
+    port = ":9322"
+    level = 2
+
+    [log]
+    format = "json"
+    output = "stdout"
+    caller = false
+
+    [http]
+    enable_recovery = true
+    enable_request_context = true
+    enable_request_log = true
+    enable_gzip = true
+    secure_cookies = true
+
+    [http.cors]
+    enabled = false
+    allow_origins = []
+    allow_methods = []
+    allow_headers = []
+    allow_credentials = false
+    expose_headers = []
+    max_age_seconds = 0
+
+    [admin]
+    upload_dir = "/uploads"
+
+    [mysql]
+    enabled = true
+    host = "mysql"
+    port = 3306
+    database = "echo_admin"
+    username = "echo_admin"
+    password = ""
+    max_open_conns = 25
+    max_idle_conns = 5
+    conn_max_lifetime_seconds = 300
+    ping_timeout_seconds = 3
+
+    [redis]
+    enabled = false
+    address = ""
+    username = ""
+    password = ""
+    db = 0
+    dial_timeout_seconds = 3
+    read_timeout_seconds = 3
+    write_timeout_seconds = 3
+    ping_timeout_seconds = 3
+
+    [mongodb]
+    enabled = false
+    uri = ""
+    database = ""
+    connect_timeout_seconds = 3
+    ping_timeout_seconds = 3
+
+    [tracing]
+    enabled = false
+    endpoint = ""
+    protocol = "grpc"
+    insecure = true
+    service_name = ""
+    sample_ratio = 1.0
+    shutdown_timeout_seconds = 5
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo-admin-api
+  labels:
+    app.kubernetes.io/name: echo-admin
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: echo-admin
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: echo-admin
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: echo-admin
+        app.kubernetes.io/component: api
+        app.kubernetes.io/part-of: echo-admin
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+      containers:
+        - name: api
+          image: echo-admin:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: ECHO_ADMIN_MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: echo-admin-secrets
+                  key: mysql-password
+                  optional: false
+            - name: ECHO_ADMIN_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: echo-admin-secrets
+                  key: redis-password
+                  optional: true
+            - name: ECHO_ADMIN_MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: echo-admin-secrets
+                  key: mongodb-uri
+                  optional: true
+          ports:
+            - name: http
+              containerPort: 9322
+              protocol: TCP
+          volumeMounts:
+            - name: runtime-config
+              mountPath: /configs/config.toml
+              subPath: config.toml
+              readOnly: true
+            - name: uploads
+              mountPath: /uploads
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            failureThreshold: 12
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            periodSeconds: 5
+      volumes:
+        - name: runtime-config
+          configMap:
+            name: echo-admin-runtime
+        - name: uploads
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-admin-api
+  labels:
+    app.kubernetes.io/name: echo-admin
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: echo-admin
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: echo-admin
+    app.kubernetes.io/component: api
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: http

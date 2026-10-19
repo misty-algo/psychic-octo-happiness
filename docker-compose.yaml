@@ -1,0 +1,117 @@
+# Local development compose file. The API and MySQL are default services because
+# the back-office foundation stores runtime state in MySQL. Other infrastructure
+# stays behind the resources profile. Published ports bind to localhost.
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      ECHO_ADMIN_MYSQL_PASSWORD: "${ECHO_ADMIN_MYSQL_PASSWORD:-echo_admin_dev_password}"
+    volumes:
+      - type: bind
+        source: ./configs/config.compose.toml
+        target: /configs/config.toml
+        read_only: true
+    ports:
+      - host_ip: 127.0.0.1
+        published: "${ECHO_ADMIN_API_PORT:-9322}"
+        target: 9322
+        protocol: tcp
+    networks:
+      - api-net
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ${ECHO_ADMIN_MYSQL_DATABASE:-echo_admin}
+      MYSQL_USER: ${ECHO_ADMIN_MYSQL_USER:-echo_admin}
+      MYSQL_PASSWORD: ${ECHO_ADMIN_MYSQL_PASSWORD:-echo_admin_dev_password}
+      MYSQL_ROOT_PASSWORD: ${ECHO_ADMIN_MYSQL_ROOT_PASSWORD:-echo_admin_dev_root_password}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - host_ip: 127.0.0.1
+        published: "${ECHO_ADMIN_MYSQL_PORT:-3306}"
+        target: 3306
+        protocol: tcp
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MYSQL_USER} -p$${MYSQL_PASSWORD}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - api-net
+
+  redis:
+    image: redis:7.4-alpine
+    profiles: ["resources"]
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    ports:
+      - host_ip: 127.0.0.1
+        published: "${ECHO_ADMIN_REDIS_PORT:-6379}"
+        target: 6379
+        protocol: tcp
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - api-net
+
+  mongodb:
+    image: mongo:8.0
+    profiles: ["resources"]
+    volumes:
+      - mongodb-data:/data/db
+    ports:
+      - host_ip: 127.0.0.1
+        published: "${ECHO_ADMIN_MONGODB_PORT:-27017}"
+        target: 27017
+        protocol: tcp
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - api-net
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.65.0
+    profiles: ["resources"]
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - host_ip: 127.0.0.1
+        published: "${ECHO_ADMIN_JAEGER_UI_PORT:-16686}"
+        target: 16686
+        protocol: tcp
+      - host_ip: 127.0.0.1
+        published: "${ECHO_ADMIN_OTLP_GRPC_PORT:-4317}"
+        target: 4317
+        protocol: tcp
+      - host_ip: 127.0.0.1
+        published: "${ECHO_ADMIN_OTLP_HTTP_PORT:-4318}"
+        target: 4318
+        protocol: tcp
+    networks:
+      - api-net
+
+networks:
+  api-net:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  redis-data:
+  mongodb-data:

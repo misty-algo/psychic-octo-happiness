@@ -1,0 +1,3 @@
+# Use Login Sessions for Browser Administration
+
+Browser administration will use server-side **Login Sessions** stored in MySQL and carried by HttpOnly cookies, while non-browser clients continue to use **API Tokens**. We will not keep browser JWT compatibility: login responses must not expose session credentials, authorization must use current administrator and role state, and state-changing browser requests must use Echo's CSRF middleware. This keeps human browser login, machine API access, session revocation, and route authorization on separate paths instead of preserving a mixed Bearer-token model.

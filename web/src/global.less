@@ -1,0 +1,114 @@
+@font-face {
+  font-family: "AlibabaSans";
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url("//mdn.alipayobjects.com/huamei_iwk9zp/afts/file/A*1GSgSYDD_aIAAAAAQsAAAAgAegCCAQ/AlibabaSans-Light.woff2")
+    format("woff2");
+}
+@font-face {
+  font-family: "AlibabaSans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("//mdn.alipayobjects.com/huamei_iwk9zp/afts/file/A*2zEUQqnPNesAAAAAQtAAAAgAegCCAQ/AlibabaSans-Regular.woff2")
+    format("woff2");
+}
+@font-face {
+  font-family: "AlibabaSans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("//mdn.alipayobjects.com/huamei_iwk9zp/afts/file/A*E_cxRbMlZqUAAAAAQuAAAAgAegCCAQ/AlibabaSans-Medium.woff2")
+    format("woff2");
+}
+@font-face {
+  font-family: "AlibabaSans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("//mdn.alipayobjects.com/huamei_iwk9zp/afts/file/A*E_cxRbMlZqUAAAAAQuAAAAgAegCCAQ/AlibabaSans-Bold.woff2")
+    format("woff2");
+}
+@font-face {
+  font-family: "AlibabaSans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("//mdn.alipayobjects.com/huamei_iwk9zp/afts/file/A*E_cxRbMlZqUAAAAAQuAAAAgAegCCAQ/AlibabaSans-Heavy.woff2")
+    format("woff2");
+}
+
+body[data-theme='dark'] {
+  background: #141414;
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family:
+    AlibabaSans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+.colorWeak {
+  filter: invert(80%);
+}
+
+.ant-layout {
+  min-height: 100vh;
+}
+.ant-pro-sider.ant-layout-sider.ant-pro-sider-fixed {
+  left: unset;
+}
+
+.ant-pro-sider-collapsed .ant-pro-sider-link span:not([role='img']) {
+  display: none;
+}
+
+canvas {
+  display: block;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+@media (max-width: 768px) {
+  .ant-table {
+    width: 100%;
+    overflow-x: auto;
+    &-thead > tr,
+    &-tbody > tr {
+      > th,
+      > td {
+        white-space: pre;
+        > span {
+          display: block;
+        }
+      }
+    }
+  }
+}
+
+// antd v6 移除了以下组件的默认间距，导致描述表字段名与值、页签与内容、
+// 统计卡标题与数值全部贴死；管理后台信息密度高，这里补回呼吸空间。
+// 双类选择器提升特异性，覆盖 antd v6 运行时注入的同名单类规则。
+.ant-descriptions .ant-descriptions-item-label {
+  padding-inline-end: 12px;
+}
+
+// antd v6 运行时注入的 tabs 规则带 cssinjs hash 类（三类特异性），
+// 这里用 body 前缀提到 (0,3,1) 才能赢回页签与内容的间距。
+body .ant-tabs.ant-tabs-top > .ant-tabs-nav {
+  margin-bottom: 16px;
+}
+
+.ant-statistic .ant-statistic-title {
+  margin-bottom: 6px;
+}

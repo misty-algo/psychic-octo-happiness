@@ -1,0 +1,120 @@
+version: "2"
+
+run:
+  modules-download-mode: mod
+  tests: true
+  allow-parallel-runners: true
+
+linters:
+  default: none
+  enable:
+    - copyloopvar
+    - dupl
+    - durationcheck
+    - errcheck
+    - errorlint
+    - funlen
+    - goconst
+    - gocyclo
+    - govet
+    - ineffassign
+    - misspell
+    - nolintlint
+    - prealloc
+    - revive
+    - staticcheck
+    - unconvert
+    - unused
+  settings:
+    dupl:
+      threshold: 120
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+    funlen:
+      lines: 50
+      statements: 50
+    goconst:
+      min-len: 2
+      min-occurrences: 3
+    gocyclo:
+      min-complexity: 12
+    govet:
+      enable:
+        - atomicalign
+        - bools
+        - copylocks
+        - printf
+        - shadow
+        - sortslice
+        - unreachable
+        - unusedresult
+        - nilness
+    misspell:
+      locale: US
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+      allow-unused: false
+    revive:
+      confidence: 0.8
+      severity: warning
+      rules:
+        - name: exported
+        - name: if-return
+        - name: early-return
+        - name: unnecessary-stmt
+        - name: empty-lines
+        - name: indent-error-flow
+        - name: blank-imports
+        - name: import-shadowing
+        - name: range-val-in-closure
+        - name: receiver-naming
+        - name: time-naming
+        - name: error-naming
+        - name: error-strings
+        - name: errorf
+        - name: unexported-return
+          disabled: true
+  exclusions:
+    generated: lax
+    rules:
+      - path: _test\\.go
+        linters:
+          - gocyclo
+      - path: _test\\.go
+        linters:
+          - errcheck
+      - path: .*(\\.gen\\.go|_mock\\.go|\\.pb\\.go)$
+        linters:
+          - dupl
+          - goconst
+          - gocyclo
+          - revive
+    paths:
+      - vendor$
+      - third_party$
+      - builtin$
+      - examples$
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  settings:
+    gofumpt:
+      extra-rules: true
+    goimports:
+      local-prefixes:
+        - github.com/NSObjects/echo-admin
+  exclusions:
+    generated: lax
+    paths:
+      - vendor$
+      - third_party$
+      - builtin$
+      - examples$

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" role="img" aria-labelledby="title desc">
+  <title id="title">Echo Admin</title>
+  <desc id="desc">Echo Admin application mark</desc>
+  <rect width="200" height="200" rx="36" fill="#1677ff"/>
+  <path d="M48 58h104v20H72v34h70v20H72v10h84v20H48V58z" fill="#ffffff"/>
+  <path d="M82 94h36l18 34h-24l-8-16H82V94z" fill="#36cfc9"/>
+</svg>

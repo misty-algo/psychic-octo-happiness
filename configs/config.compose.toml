@@ -1,0 +1,70 @@
+[app]
+name = "echo-admin"
+version = "dev"
+
+[system]
+port = ":9322"
+level = 1
+
+[log]
+format = "console"
+output = "stdout"
+caller = false
+
+[http]
+enable_recovery = true
+enable_request_context = true
+enable_request_log = true
+enable_gzip = true
+secure_cookies = false
+
+[http.cors]
+enabled = false
+allow_origins = []
+allow_methods = []
+allow_headers = []
+allow_credentials = false
+expose_headers = []
+max_age_seconds = 0
+
+[admin]
+upload_dir = "uploads"
+
+[mysql]
+enabled = true
+host = "mysql"
+port = 3306
+database = "echo_admin"
+username = "echo_admin"
+password = ""
+max_open_conns = 25
+max_idle_conns = 5
+conn_max_lifetime_seconds = 300
+ping_timeout_seconds = 3
+
+[redis]
+enabled = false
+address = ""
+username = ""
+password = ""
+db = 0
+dial_timeout_seconds = 3
+read_timeout_seconds = 3
+write_timeout_seconds = 3
+ping_timeout_seconds = 3
+
+[mongodb]
+enabled = false
+uri = ""
+database = ""
+connect_timeout_seconds = 3
+ping_timeout_seconds = 3
+
+[tracing]
+enabled = false
+endpoint = ""
+protocol = "grpc"
+insecure = true
+service_name = ""
+sample_ratio = 1.0
+shutdown_timeout_seconds = 5
