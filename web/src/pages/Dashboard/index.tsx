@@ -10,6 +10,7 @@ import {
   listOrders,
   listPricingRules,
   listTickets,
+  listWithdrawals,
   readPoolStats,
 } from '@/services/operations';
 
@@ -18,6 +19,7 @@ type Overview = {
   runningOrders: number;
   pendingAudits: number;
   pendingTickets: number;
+  pendingWithdrawals: number;
   sharedRate: number;
   publishedRules: number;
 };
@@ -27,6 +29,7 @@ const emptyOverview = (): Overview => ({
   runningOrders: 0,
   pendingAudits: 0,
   pendingTickets: 0,
+  pendingWithdrawals: 0,
   sharedRate: 0,
   publishedRules: 0,
 });
@@ -41,7 +44,7 @@ const Dashboard: React.FC = () => {
       setLoading(true);
       try {
         // 各项独立取数：任一接口失败只影响对应卡片，不让整页空掉。
-        const [today, running, audits, tickets, pool, rules] = await Promise.all([
+        const [today, running, audits, tickets, pool, rules, withdrawals] = await Promise.all([
           listOrders({ page: 1, page_size: 1, from: dayjs().startOf('day').toISOString() }).catch(() => undefined),
           // 行程中 = 已接单到结束前，用乘客域状态枚举（后端支持逗号分隔多状态）。
           listOrders({ page: 1, page_size: 1, state: 'ACCEPTED,ARRIVED,IN_SERVICE' }).catch(() => undefined),
@@ -50,6 +53,8 @@ const Dashboard: React.FC = () => {
           listTickets({ page: 1, page_size: 1, state: 'PENDING' }).catch(() => undefined),
           readPoolStats().catch(() => undefined),
           listPricingRules({ page: 1, page_size: 1, state: 'published' }).catch(() => undefined),
+          // 待审核提现：司机提交的提现申请（共享库 withdraw_requests）。
+          listWithdrawals({ page: 1, page_size: 1, state: 'reviewing' }).catch(() => undefined),
         ]);
         if (!active) {
           return;
@@ -59,6 +64,7 @@ const Dashboard: React.FC = () => {
           runningOrders: running?.page?.total ?? 0,
           pendingAudits: audits?.page?.total ?? 0,
           pendingTickets: tickets?.page?.total ?? 0,
+          pendingWithdrawals: withdrawals?.page?.total ?? 0,
           sharedRate: pool?.shared_rate ?? 0,
           publishedRules: rules?.page?.total ?? 0,
         });
@@ -143,6 +149,19 @@ const Dashboard: React.FC = () => {
             />
             <Button type="link" style={{ paddingLeft: 0 }} onClick={() => history.push('/operations/tickets')}>
               去处理
+            </Button>
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} xl={8}>
+          <Card loading={loading}>
+            <Statistic
+              title="待审核提现"
+              value={overview.pendingWithdrawals}
+              suffix="笔"
+              valueStyle={{ color: overview.pendingWithdrawals > 0 ? '#fa8c16' : undefined }}
+            />
+            <Button type="link" style={{ paddingLeft: 0 }} onClick={() => history.push('/operations/withdrawals')}>
+              去审批
             </Button>
           </Card>
         </Col>
