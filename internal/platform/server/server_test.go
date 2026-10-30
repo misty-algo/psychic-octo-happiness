@@ -297,6 +297,78 @@ func waitForClientRequest(t *testing.T, clientErrCh <-chan error) {
 	}
 }
 
+func TestServerRunFallsBackToNextPortWhenAddressInUse(t *testing.T) {
+	blocked, fallback := freeConsecutiveLocalAddrs(t)
+	blockedListener, err := net.Listen("tcp", blocked)
+	if err != nil {
+		t.Fatalf("occupy %s: %v", blocked, err)
+	}
+	defer func() {
+		if err := blockedListener.Close(); err != nil {
+			t.Fatalf("close blocking listener: %v", err)
+		}
+	}()
+
+	e := echo.New()
+	server := &Server{echo: e, api: e.Group(apiPrefix), port: blocked}
+	server.registerSystemRoutes()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	runErrCh := make(chan error, 1)
+	go func() {
+		runErrCh <- server.Run(ctx)
+	}()
+
+	clientErrCh := make(chan error, 1)
+	go func() {
+		clientErrCh <- requestUntilServerReady("http://"+fallback+"/api/health", 2*time.Second)
+	}()
+
+	select {
+	case err := <-clientErrCh:
+		if err != nil {
+			t.Fatalf("request fallback port %s: %v", fallback, err)
+		}
+	case err := <-runErrCh:
+		t.Fatalf("Run() returned before fallback server was reachable: %v", err)
+	case <-time.After(3 * time.Second):
+		t.Fatal("timed out waiting for server on fallback port")
+	}
+
+	cancel()
+	if err := waitForRunResult(t, runErrCh); err != nil {
+		t.Fatalf("Run() error = %v, want nil after graceful shutdown", err)
+	}
+}
+
+func TestNextListenAddress(t *testing.T) {
+	tests := []struct {
+		name   string
+		addr   string
+		want   string
+		wantOK bool
+	}{
+		{name: "host and port", addr: "127.0.0.1:9322", want: "127.0.0.1:9323", wantOK: true},
+		{name: "port only", addr: ":9322", want: ":9323", wantOK: true},
+		{name: "last usable port", addr: ":65535", want: "", wantOK: false},
+		{name: "missing port", addr: "localhost", want: "", wantOK: false},
+		{name: "non numeric port", addr: ":http", want: "", wantOK: false},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, ok := nextListenAddress(test.addr)
+			if ok != test.wantOK {
+				t.Fatalf("nextListenAddress(%q) ok = %v, want %v", test.addr, ok, test.wantOK)
+			}
+			if got != test.want {
+				t.Fatalf("nextListenAddress(%q) = %q, want %q", test.addr, got, test.want)
+			}
+		})
+	}
+}
+
 func TestServerRunRejectsNilContext(t *testing.T) {
 	server := mustNewServer(t, configs.Config{})
 
@@ -506,6 +578,31 @@ func freeLocalAddr(t *testing.T) string {
 		t.Fatalf("close free local port listener: %v", err)
 	}
 	return addr
+}
+
+// freeConsecutiveLocalAddrs returns two adjacent local addresses that were
+// free at probe time: the first one the caller occupies, the second one the
+// port fallback is expected to land on.
+func freeConsecutiveLocalAddrs(t *testing.T) (string, string) {
+	t.Helper()
+
+	for range 10 {
+		base := freeLocalAddr(t)
+		next, ok := nextListenAddress(base)
+		if !ok {
+			continue
+		}
+		probe, err := net.Listen("tcp", next)
+		if err != nil {
+			continue
+		}
+		if err := probe.Close(); err != nil {
+			t.Fatalf("close probe listener on %s: %v", next, err)
+		}
+		return base, next
+	}
+	t.Fatal("could not find two consecutive free local ports")
+	return "", ""
 }
 
 func requestUntilServerReady(url string, timeout time.Duration) error {

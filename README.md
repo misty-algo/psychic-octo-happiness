@@ -50,7 +50,7 @@ export ECHO_ADMIN_MYSQL_PASSWORD="echo_admin_dev_password"
 go run main.go --config configs/config.toml
 ```
 
-默认监听 `:9322`。基础检查：
+默认监听 `:9322`；该端口已被占用时会顺延到下一个可用端口，并在启动日志中输出告警。基础检查：
 
 ```bash
 curl http://127.0.0.1:9322/api/health
@@ -76,7 +76,7 @@ npm install
 npm run dev
 ```
 
-前端 dev server 默认把 `/api` 代理到 `http://127.0.0.1:9322`；如需连接其他后端，设置 `ECHO_ADMIN_WEB_API_TARGET`。生产部署按同源 `/api` 访问，浏览器登录后通过 cookie 携带登录会话，unsafe method 会自动带 `X-CSRF-Token`。机器客户端继续使用 `X-API-Token`。
+前端 dev server 会自动探测后端实际监听的端口（后端端口被占用而顺延时同样跟随，扫描窗口与后端一致），并为 dev server 选择第一个空闲端口（默认从 `8000` 开始），不再被占用端口卡住；如需固定后端地址，设置 `ECHO_ADMIN_WEB_API_TARGET`。生产部署按同源 `/api` 访问，浏览器登录后通过 cookie 携带登录会话，unsafe method 会自动带 `X-CSRF-Token`。机器客户端继续使用 `X-API-Token`。
 
 ## 配置
 

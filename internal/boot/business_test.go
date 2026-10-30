@@ -10,7 +10,7 @@ import (
 
 func TestBusinessModulesAreSplitByFoundationCapability(t *testing.T) {
 	modules := BusinessModules()
-	want := []string{"setup", "access", "identity", "audit", "apitoken", "auth", "settings", "fileasset"}
+	want := []string{"setup", "access", "identity", "audit", "apitoken", "auth", "settings", "fileasset", "operations"}
 	if len(modules) != len(want) {
 		t.Fatalf("BusinessModules() length = %d, want %d", len(modules), len(want))
 	}

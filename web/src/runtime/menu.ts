@@ -1,8 +1,11 @@
 import {
   ApiOutlined,
+  CarOutlined,
   CloudServerOutlined,
   ControlOutlined,
+  CustomerServiceOutlined,
   DashboardOutlined,
+  GiftOutlined,
   FileSearchOutlined,
   FolderOutlined,
   KeyOutlined,
@@ -10,6 +13,7 @@ import {
   ProfileOutlined,
   SafetyOutlined,
   SettingOutlined,
+  TeamOutlined,
   UploadOutlined,
   UserOutlined,
 } from '@ant-design/icons';
@@ -31,8 +35,11 @@ const normalizeMenuPath = (path?: string): string => {
 
 const menuIconComponents: Record<string, React.ElementType> = {
   api: ApiOutlined,
+  car: CarOutlined,
   control: ControlOutlined,
+  customerService: CustomerServiceOutlined,
   dashboard: DashboardOutlined,
+  gift: GiftOutlined,
   fileSearch: FileSearchOutlined,
   folder: FolderOutlined,
   key: KeyOutlined,
@@ -41,6 +48,7 @@ const menuIconComponents: Record<string, React.ElementType> = {
   safety: SafetyOutlined,
   server: CloudServerOutlined,
   setting: SettingOutlined,
+  team: TeamOutlined,
   upload: UploadOutlined,
   user: UserOutlined,
 };

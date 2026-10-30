@@ -33,12 +33,14 @@ expose_headers = []
 max_age_seconds = 0
 
 [mysql]
+# 本地 docker MySQL（huazhu-passenger-mysql:3307），与乘客/司机端同机，
+# 不再依赖外网 MySQL（线上实例已拒绝本机 IP）。
 enabled = true
 host = "127.0.0.1"
-port = 3306
+port = 3307
 database = "echo_admin"
 username = "root"
-password = ""
+password = "root"
 max_open_conns = 25
 max_idle_conns = 5
 conn_max_lifetime_seconds = 300
@@ -56,11 +58,13 @@ write_timeout_seconds = 3
 ping_timeout_seconds = 3
 
 [mongodb]
-enabled = false
-uri = ""
-database = ""
-connect_timeout_seconds = 3
-ping_timeout_seconds = 3
+enabled = true
+# 与乘客端/司机端（花小猪主项目）共用同一个 MongoDB 实例与库，
+# 运营看板的订单统计直接读 passenger_orders 集合。
+uri = "mongodb://bw:bw-secret@127.0.0.1:27018/?authSource=admin"
+database = "huazhu"
+connect_timeout_seconds = 5
+ping_timeout_seconds = 5
 
 [tracing]
 enabled = false

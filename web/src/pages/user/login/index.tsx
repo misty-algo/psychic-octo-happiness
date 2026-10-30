@@ -143,10 +143,10 @@ const useStyles = createStyles(() => ({
       boxShadow: 'none',
     },
     '.ant-input-affix-wrapper:hover': {
-      borderColor: '#91caff',
+      borderColor: '#ffc9a3',
     },
     '.ant-input-affix-wrapper-focused': {
-      borderColor: '#1677ff',
+      borderColor: '#ff7d41',
       boxShadow: '0 0 0 3px rgba(22, 119, 255, 0.12)',
     },
     '.ant-input-prefix': {
@@ -156,12 +156,12 @@ const useStyles = createStyles(() => ({
     '.ant-btn-primary': {
       minHeight: 46,
       borderRadius: 8,
-      background: '#1677ff',
+      background: '#ff7d41',
       boxShadow: '0 14px 30px rgba(22, 119, 255, 0.22)',
       fontWeight: 650,
     },
     '.ant-btn-primary:not(:disabled):not(.ant-btn-disabled):hover': {
-      background: '#3c89ff',
+      background: '#ff9a6a',
     },
   },
   mobileBrand: {
@@ -180,7 +180,7 @@ const useStyles = createStyles(() => ({
     borderRadius: 8,
     display: 'grid',
     placeItems: 'center',
-    background: '#1677ff',
+    background: '#ff7d41',
     color: '#f7f9fc',
     fontSize: 16,
     fontWeight: 700,
@@ -226,25 +226,27 @@ const Login: React.FC = () => {
       </Helmet>
       <section className={styles.visual} aria-hidden="true">
         <div className={styles.visualBrand}>
-          <div className={styles.mark}>EA</div>
+          <div className={styles.mark}>猪</div>
           <div className={styles.brandText}>
-            <span className={styles.brandName}>Echo Admin</span>
-            <span className={styles.brandMeta}>后台管理模板</span>
+            <span className={styles.brandName}>花小猪打车</span>
+            <span className={styles.brandMeta}>运营管理后台</span>
           </div>
         </div>
       </section>
       <main className={styles.formSide}>
         <div className={styles.panel}>
           <div className={styles.mobileBrand}>
-            <div className={styles.mobileMark}>EA</div>
+            <div className={styles.mobileMark}>猪</div>
             <div className={styles.brandText}>
-              <span className={styles.brandName}>Echo Admin</span>
-              <span className={styles.brandMeta}>后台管理模板</span>
+              <span className={styles.brandName}>花小猪打车</span>
+              <span className={styles.brandMeta}>运营管理后台</span>
             </div>
           </div>
           <div className={styles.formHeader}>
-            <h2 className={styles.formTitle}>管理员登录</h2>
-            <p className={styles.formSubtitle}>请输入账号和密码。</p>
+            <h2 className={styles.formTitle}>运营后台登录</h2>
+            <p className={styles.formSubtitle}>
+              花小猪打车 · 运营管理后台，请使用运营账号登录。
+            </p>
           </div>
           <LoginForm
             className={styles.loginForm}

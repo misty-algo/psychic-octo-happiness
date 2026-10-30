@@ -32,3 +32,11 @@ go.work.sum
 /bin/app
 /tasks/
 /web/types/cache/
+
+# Local dev runtime (MySQL instance / backend logs), created by the A07 iteration
+/mysql-data/
+/.mysql-my.ini
+/.mysql-error.log
+/.backend.err
+/.playwright-cli/
+a07-*.png

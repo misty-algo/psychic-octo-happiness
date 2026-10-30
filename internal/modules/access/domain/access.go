@@ -70,6 +70,34 @@ const (
 	PermissionLogRead    = "log:read"
 	PermissionLogDelete  = "log:delete"
 	PermissionLogResolve = "log:resolve"
+
+	PermissionOpsUserRead     = "ops_user:read"
+	PermissionOpsUserDetail   = "ops_user:detail"
+	PermissionOpsUserRestrict = "ops_user:restrict"
+
+	PermissionOpsAuditRead   = "ops_audit:read"
+	PermissionOpsAuditClaim  = "ops_audit:claim"
+	PermissionOpsAuditDecide = "ops_audit:decide"
+
+	PermissionOpsOrderRead    = "ops_order:read"
+	PermissionOpsOrderCommand = "ops_order:command"
+
+	PermissionOpsTicketRead   = "ops_ticket:read"
+	PermissionOpsTicketHandle = "ops_ticket:command"
+	PermissionOpsTicketSenior = "ops_ticket:senior"
+
+	PermissionOpsMarketingRead   = "ops_marketing:read"
+	PermissionOpsMarketingWrite  = "ops_marketing:write"
+	PermissionOpsMarketingSettle = "ops_marketing:settle"
+
+	// A05 计价规则：改价是高风险动作，发布单独一个权限，不与管理混用。
+	PermissionOpsPricingRead   = "ops_pricing:read"
+	PermissionOpsPricingWrite  = "ops_pricing:write"
+	PermissionOpsPricingPublish = "ops_pricing:publish"
+
+	// A06 派单策略。
+	PermissionOpsDispatchRead  = "ops_dispatch:read"
+	PermissionOpsDispatchWrite = "ops_dispatch:write"
 )
 
 // PermissionDefinition describes one grantable action exposed to role managers.
@@ -421,6 +449,32 @@ var permissionCatalog = []PermissionDefinition{
 	{Token: PermissionLogRead, Resource: "审计日志", Action: "查看", Name: "查看日志"},
 	{Token: PermissionLogDelete, Resource: "审计日志", Action: "删除", Name: "删除日志"},
 	{Token: PermissionLogResolve, Resource: "审计日志", Action: "处理", Name: "处理系统错误日志"},
+
+	{Token: PermissionOpsUserRead, Resource: "运营用户", Action: "查看", Name: "查看运营用户列表"},
+	{Token: PermissionOpsUserDetail, Resource: "运营用户", Action: "查看详情", Name: "查看用户完整信息"},
+	{Token: PermissionOpsUserRestrict, Resource: "运营用户", Action: "限制", Name: "限制与解除用户"},
+
+	{Token: PermissionOpsAuditRead, Resource: "司机车辆审核", Action: "查看", Name: "查看审核工作台与版本链"},
+	{Token: PermissionOpsAuditClaim, Resource: "司机车辆审核", Action: "领取", Name: "领取审核版本"},
+	{Token: PermissionOpsAuditDecide, Resource: "司机车辆审核", Action: "裁决", Name: "批准或驳回审核申请"},
+
+	{Token: PermissionOpsOrderRead, Resource: "订单管理", Action: "查看", Name: "查看订单列表与穿透详情"},
+	{Token: PermissionOpsOrderCommand, Resource: "订单管理", Action: "命令", Name: "执行订单业务命令"},
+
+	{Token: PermissionOpsTicketRead, Resource: "投诉工单", Action: "查看", Name: "查看工单处理台与流转记录"},
+	{Token: PermissionOpsTicketHandle, Resource: "投诉工单", Action: "处理", Name: "领单、回复、暂停续算、解决与关闭"},
+	{Token: PermissionOpsTicketSenior, Resource: "投诉工单", Action: "申诉", Name: "高级客服处理申诉与误报撤销"},
+
+	{Token: PermissionOpsMarketingRead, Resource: "营销中心", Action: "查看", Name: "查看券模板、券批次、发放记录与活动"},
+	{Token: PermissionOpsMarketingWrite, Resource: "营销中心", Action: "管理", Name: "创建券模板与批次、发放优惠券、启停活动"},
+	{Token: PermissionOpsMarketingSettle, Resource: "营销中心", Action: "对账", Name: "查看活动结算并导出财务对账单"},
+
+	{Token: PermissionOpsPricingRead, Resource: "计价规则", Action: "查看", Name: "查看计价规则与分账样例预览"},
+	{Token: PermissionOpsPricingWrite, Resource: "计价规则", Action: "管理", Name: "新建计价规则草稿"},
+	{Token: PermissionOpsPricingPublish, Resource: "计价规则", Action: "发布", Name: "发布与停用计价版本"},
+
+	{Token: PermissionOpsDispatchRead, Resource: "派单策略", Action: "查看", Name: "查看派单策略与候选排序预览"},
+	{Token: PermissionOpsDispatchWrite, Resource: "派单策略", Action: "管理", Name: "新建与发布派单策略"},
 }
 
 func isHTTPMethod(value string) bool {

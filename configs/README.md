@@ -18,7 +18,7 @@ name = "echo-admin"
 version = "dev"
 
 [system]
-port = ":9322"
+port = ":9322" # 被占用时自动顺延到下一个可用端口
 level = 1 # 1=debug, 2=online
 
 [log]

@@ -7,21 +7,22 @@ const Settings: ProLayoutProps & {
   logo?: string;
 } = {
   navTheme: 'light',
-  colorPrimary: '#1677ff',
+  // 花小猪打车品牌色（橙黄）。
+  colorPrimary: '#ff7d41',
   layout: 'mix',
   contentWidth: 'Fluid',
   fixedHeader: true,
   fixSiderbar: true,
   colorWeak: false,
-  title: 'Echo Admin',
+  title: '花小猪打车',
   logo: '/logo.svg',
   iconfontUrl: '',
   token: {
     // ProLayout 的菜单选中色不会自动跟随 antd colorPrimary，需显式指定为品牌蓝。
     sider: {
-      colorTextMenuSelected: '#1677ff',
-      colorTextMenuActive: 'rgba(22, 119, 255, 0.92)',
-      colorBgMenuItemSelected: 'rgba(22, 119, 255, 0.09)',
+      colorTextMenuSelected: '#ff7d41',
+      colorTextMenuActive: 'rgba(255, 125, 65, 0.92)',
+      colorBgMenuItemSelected: 'rgba(255, 125, 65, 0.12)',
     },
   },
 };

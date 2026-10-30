@@ -96,6 +96,74 @@ var managedAPIRouteCatalog = [...]ManagedAPIRouteDefinition{
 	{Method: "DELETE", Pattern: "/api/logs/errors/:id/resolve", Description: "取消处理系统错误日志", Group: "log", Permission: PermissionLogResolve},
 	{Method: "DELETE", Pattern: "/api/logs/errors/:id", Description: "删除系统错误日志", Group: "log", Permission: PermissionLogDelete},
 	{Method: "POST", Pattern: "/api/logs/errors/batch-delete", Description: "批量删除系统错误日志", Group: "log", Permission: PermissionLogDelete},
+
+	{Method: "GET", Pattern: "/api/ops/users", Description: "运营用户列表", Group: "ops", Permission: PermissionOpsUserRead},
+	{Method: "GET", Pattern: "/api/ops/users/:id", Description: "用户完整信息（含手机号脱敏解除）", Group: "ops", Permission: PermissionOpsUserDetail},
+	{Method: "POST", Pattern: "/api/ops/users/:id/restrict", Description: "限制用户", Group: "ops", Permission: PermissionOpsUserRestrict},
+	{Method: "POST", Pattern: "/api/ops/users/:id/unrestrict", Description: "解除用户限制", Group: "ops", Permission: PermissionOpsUserRestrict},
+
+	{Method: "GET", Pattern: "/api/ops/driver-audits", Description: "司机车辆审核工作台", Group: "ops", Permission: PermissionOpsAuditRead},
+	{Method: "GET", Pattern: "/api/ops/driver-audits/:application_id", Description: "审核版本链", Group: "ops", Permission: PermissionOpsAuditRead},
+	{Method: "POST", Pattern: "/api/ops/driver-audits/:application_id/revisions/:revision/claim", Description: "领取审核版本", Group: "ops", Permission: PermissionOpsAuditClaim},
+	{Method: "POST", Pattern: "/api/ops/driver-audits/:application_id/revisions/:revision/decide", Description: "审核裁决", Group: "ops", Permission: PermissionOpsAuditDecide},
+
+	{Method: "GET", Pattern: "/api/ops/orders", Description: "订单管理列表", Group: "ops", Permission: PermissionOpsOrderRead},
+	{Method: "GET", Pattern: "/api/ops/orders/:order_no", Description: "订单穿透详情", Group: "ops", Permission: PermissionOpsOrderRead},
+	{Method: "POST", Pattern: "/api/ops/orders/:order_no/commands", Description: "订单业务命令", Group: "ops", Permission: PermissionOpsOrderCommand},
+
+	{Method: "GET", Pattern: "/api/ops/tickets", Description: "工单处理台列表", Group: "ops", Permission: PermissionOpsTicketRead},
+	{Method: "GET", Pattern: "/api/ops/tickets/:ticket_no", Description: "工单详情", Group: "ops", Permission: PermissionOpsTicketRead},
+	{Method: "POST", Pattern: "/api/ops/tickets/:ticket_no/commands", Description: "工单状态命令", Group: "ops", Permission: PermissionOpsTicketHandle},
+	{Method: "POST", Pattern: "/api/ops/tickets/:ticket_no/appeal", Description: "工单申诉换人", Group: "ops", Permission: PermissionOpsTicketSenior},
+
+	{Method: "GET", Pattern: "/api/ops/marketing/coupon-templates", Description: "券模板列表", Group: "ops", Permission: PermissionOpsMarketingRead},
+	{Method: "GET", Pattern: "/api/ops/marketing/coupon-templates/:template_no", Description: "券模板详情", Group: "ops", Permission: PermissionOpsMarketingRead},
+	{Method: "POST", Pattern: "/api/ops/marketing/coupon-templates", Description: "新建券模板", Group: "ops", Permission: PermissionOpsMarketingWrite},
+	{Method: "POST", Pattern: "/api/ops/marketing/coupon-templates/:template_no/commands", Description: "券模板发布/停售", Group: "ops", Permission: PermissionOpsMarketingWrite},
+
+	{Method: "GET", Pattern: "/api/ops/marketing/coupon-batches", Description: "券批次列表", Group: "ops", Permission: PermissionOpsMarketingRead},
+	{Method: "POST", Pattern: "/api/ops/marketing/coupon-batches", Description: "新建券批次", Group: "ops", Permission: PermissionOpsMarketingWrite},
+	{Method: "POST", Pattern: "/api/ops/marketing/coupon-batches/:batch_no/issue", Description: "发放优惠券", Group: "ops", Permission: PermissionOpsMarketingWrite},
+	{Method: "POST", Pattern: "/api/ops/marketing/coupon-batches/:batch_no/commands", Description: "券批次停止/结束", Group: "ops", Permission: PermissionOpsMarketingWrite},
+	{Method: "GET", Pattern: "/api/ops/marketing/coupons", Description: "已发放券查询", Group: "ops", Permission: PermissionOpsMarketingRead},
+
+	{Method: "GET", Pattern: "/api/ops/marketing/campaigns", Description: "营销活动列表", Group: "ops", Permission: PermissionOpsMarketingRead},
+	{Method: "POST", Pattern: "/api/ops/marketing/campaigns", Description: "新建营销活动", Group: "ops", Permission: PermissionOpsMarketingWrite},
+	{Method: "POST", Pattern: "/api/ops/marketing/campaigns/:code/commands", Description: "活动启停", Group: "ops", Permission: PermissionOpsMarketingWrite},
+	{Method: "GET", Pattern: "/api/ops/marketing/campaigns/:code/settlement", Description: "活动结算对账", Group: "ops", Permission: PermissionOpsMarketingSettle},
+	{Method: "GET", Pattern: "/api/ops/marketing/campaigns/:code/settlement/export", Description: "活动对账单导出", Group: "ops", Permission: PermissionOpsMarketingSettle},
+
+	{Method: "POST", Pattern: "/api/ops/marketing/campaigns/:code/subsidies", Description: "登记补贴发放", Group: "ops", Permission: PermissionOpsMarketingWrite},
+	{Method: "GET", Pattern: "/api/ops/marketing/campaigns/:code/subsidies", Description: "补贴台账查询", Group: "ops", Permission: PermissionOpsMarketingRead},
+	{Method: "GET", Pattern: "/api/ops/marketing/campaigns/:code/subsidy-summary", Description: "补贴口径汇总", Group: "ops", Permission: PermissionOpsMarketingRead},
+
+	// A07 券作废与 A08 补贴追回
+	{Method: "POST", Pattern: "/api/ops/marketing/coupons/:coupon_no/void", Description: "作废优惠券", Group: "ops", Permission: PermissionOpsMarketingWrite},
+	{Method: "POST", Pattern: "/api/ops/marketing/campaigns/:code/subsidies/:record_no/reverse", Description: "追回补贴", Group: "ops", Permission: PermissionOpsMarketingWrite},
+
+	// A05 计价规则管理
+	{Method: "GET", Pattern: "/api/ops/pricing/rules", Description: "计价规则列表", Group: "ops", Permission: PermissionOpsPricingRead},
+	{Method: "POST", Pattern: "/api/ops/pricing/rules", Description: "新建计价规则草稿", Group: "ops", Permission: PermissionOpsPricingWrite},
+	{Method: "GET", Pattern: "/api/ops/pricing/rules/effective", Description: "查询生效计价版本", Group: "ops", Permission: PermissionOpsPricingRead},
+	{Method: "GET", Pattern: "/api/ops/pricing/rules/:rule_id", Description: "计价规则详情", Group: "ops", Permission: PermissionOpsPricingRead},
+	{Method: "POST", Pattern: "/api/ops/pricing/rules/:rule_id/publish", Description: "发布计价规则", Group: "ops", Permission: PermissionOpsPricingPublish},
+	{Method: "POST", Pattern: "/api/ops/pricing/rules/:rule_id/disable", Description: "停用计价规则", Group: "ops", Permission: PermissionOpsPricingPublish},
+	{Method: "POST", Pattern: "/api/ops/pricing/preview", Description: "计价分账样例预览", Group: "ops", Permission: PermissionOpsPricingRead},
+
+	// A06 派单策略配置
+	{Method: "GET", Pattern: "/api/ops/dispatch/strategies", Description: "派单策略列表", Group: "ops", Permission: PermissionOpsDispatchRead},
+	{Method: "POST", Pattern: "/api/ops/dispatch/strategies", Description: "新建派单策略草稿", Group: "ops", Permission: PermissionOpsDispatchWrite},
+	{Method: "POST", Pattern: "/api/ops/dispatch/strategies/:strategy_id/publish", Description: "发布派单策略", Group: "ops", Permission: PermissionOpsDispatchWrite},
+	{Method: "POST", Pattern: "/api/ops/dispatch/strategies/:strategy_id/preview", Description: "派单候选排序预览", Group: "ops", Permission: PermissionOpsDispatchRead},
+
+	// A09 拼车与特价配置
+	{Method: "GET", Pattern: "/api/ops/pool/configs", Description: "拼车匹配配置列表", Group: "ops", Permission: PermissionOpsMarketingRead},
+	{Method: "POST", Pattern: "/api/ops/pool/configs", Description: "新建拼车匹配配置", Group: "ops", Permission: PermissionOpsMarketingWrite},
+	{Method: "POST", Pattern: "/api/ops/pool/configs/:config_id/publish", Description: "发布拼车匹配配置", Group: "ops", Permission: PermissionOpsMarketingWrite},
+	{Method: "GET", Pattern: "/api/ops/pool/plans", Description: "特价方案列表", Group: "ops", Permission: PermissionOpsMarketingRead},
+	{Method: "POST", Pattern: "/api/ops/pool/plans", Description: "新建特价方案", Group: "ops", Permission: PermissionOpsMarketingWrite},
+	{Method: "POST", Pattern: "/api/ops/pool/plans/:plan_id/publish", Description: "发布特价方案", Group: "ops", Permission: PermissionOpsMarketingWrite},
+	{Method: "GET", Pattern: "/api/ops/pool/stats", Description: "拼车统计口径", Group: "ops", Permission: PermissionOpsMarketingRead},
 }
 
 // ManagedAPIRouteCatalog returns the authoritative deployment definition.

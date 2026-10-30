@@ -16,6 +16,7 @@ import (
 	authhttp "github.com/NSObjects/echo-admin/internal/modules/auth/http"
 	filehttp "github.com/NSObjects/echo-admin/internal/modules/fileasset/http"
 	identityhttp "github.com/NSObjects/echo-admin/internal/modules/identity/http"
+	operationshttp "github.com/NSObjects/echo-admin/internal/modules/operations/http"
 	settingshttp "github.com/NSObjects/echo-admin/internal/modules/settings/http"
 	setuphttp "github.com/NSObjects/echo-admin/internal/modules/setup/http"
 	"github.com/NSObjects/echo-admin/internal/platform/configs"
@@ -124,6 +125,7 @@ func TestBusinessRouteManifestMatchesManagedAPIRouteCatalog(t *testing.T) {
 	do.ProvideValue(injector, &authhttp.Handler{})
 	do.ProvideValue(injector, &settingshttp.Handler{})
 	do.ProvideValue(injector, &filehttp.Handler{})
+	do.ProvideValue(injector, &operationshttp.Handler{})
 
 	if mountErr := mountModules(Context{
 		Server:    srv,

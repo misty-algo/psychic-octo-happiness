@@ -4,7 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
+	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -28,6 +31,23 @@ const (
 	defaultWriteTimeout   = 30 * time.Second
 	defaultIdleTimeout    = 120 * time.Second
 	defaultShutdownPeriod = 10 * time.Second
+)
+
+const (
+	// fallbackPortAttempts counts the configured address, so Run tries at most
+	// fallbackPortAttempts-1 consecutive ports after a bind conflict. The
+	// bound keeps a machine with a fully occupied port range failing loudly
+	// instead of walking the whole port space.
+	fallbackPortAttempts = 20
+
+	// maxTCPPort is the highest usable TCP port number; after it there is no
+	// port left to fall back to.
+	maxTCPPort = 65535
+
+	// wsaEAddrInUse is the Windows winsock errno returned by a bind conflict.
+	// Windows never surfaces the POSIX value behind syscall.EADDRINUSE, so a
+	// bind conflict has to be recognized on both.
+	wsaEAddrInUse syscall.Errno = 10048
 )
 
 // Server owns the Echo HTTP server lifecycle and system routes.
@@ -310,6 +330,8 @@ func (s *Server) statuses(ctx context.Context) []resources.CapabilityStatus {
 }
 
 // Run starts the HTTP server and blocks until ctx is canceled or startup fails.
+// When the configured address is already bound, Run logs a warning and retries
+// on the next port, so a leftover local process never blocks startup.
 func (s *Server) Run(ctx context.Context) error {
 	if ctx == nil {
 		return errors.New("server run: nil context")
@@ -320,19 +342,31 @@ func (s *Server) Run(ctx context.Context) error {
 		addr = defaultServerPort
 	}
 
-	zlog.Info().Str("addr", addr).Msg("starting server")
 	shutdownErrCh := make(chan error, 1)
-	startConfig := s.startConfig(addr)
-	startConfig.OnShutdownError = func(err error) {
-		select {
-		case shutdownErrCh <- err:
-		default:
+	for attempt := 0; ; attempt++ {
+		zlog.Info().Str("addr", addr).Msg("starting server")
+		startConfig := s.startConfig(addr)
+		startConfig.OnShutdownError = func(err error) {
+			select {
+			case shutdownErrCh <- err:
+			default:
+			}
 		}
+
+		err := startConfig.Start(ctx, s.echo)
+		if err == nil {
+			break
+		}
+		// Only a bind conflict justifies moving to another port; every other
+		// startup failure is a real configuration or runtime problem.
+		next, hasNext := nextListenAddress(addr)
+		if !isAddressInUse(err) || !hasNext || attempt+1 >= fallbackPortAttempts {
+			return err
+		}
+		zlog.Warn().Str("addr", addr).Err(err).Msg("listen address already in use, retrying on next port")
+		addr = next
 	}
 
-	if err := startConfig.Start(ctx, s.echo); err != nil {
-		return err
-	}
 	select {
 	case err := <-shutdownErrCh:
 		return fmt.Errorf("shutdown server: %w", err)
@@ -356,4 +390,26 @@ func (s *Server) startConfig(addr string) echo.StartConfig {
 			return nil
 		},
 	}
+}
+
+// nextListenAddress returns addr with its port increased by one, keeping the
+// host part untouched. It reports false when addr carries no port or already
+// sits on the last usable port, because a fallback needs both to be valid.
+func nextListenAddress(addr string) (string, bool) {
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return "", false
+	}
+	number, err := strconv.Atoi(port)
+	if err != nil || number >= maxTCPPort {
+		return "", false
+	}
+	return net.JoinHostPort(host, strconv.Itoa(number+1)), true
+}
+
+// isAddressInUse reports whether err comes from another process already
+// holding the listen address. net.Listen wraps the platform errno, so the
+// check goes through errors.Is rather than string matching.
+func isAddressInUse(err error) bool {
+	return errors.Is(err, syscall.EADDRINUSE) || errors.Is(err, wsaEAddrInUse)
 }

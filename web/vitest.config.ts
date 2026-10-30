@@ -12,7 +12,7 @@ export default defineConfig({
   test: {
     environment: 'happy-dom',
     globals: true,
-    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    include: ['src/**/*.{test,spec}.{ts,tsx}', 'scripts/**/*.test.mjs'],
     // Exclude Umi integration tests that depend on @umijs/max test infrastructure
     // These require Umi's Jest runner and cannot be used with Vitest directly
     exclude: [

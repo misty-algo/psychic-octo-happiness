@@ -118,7 +118,7 @@ export default defineConfig({
    * @name layout 插件
    * @doc https://umijs.org/docs/max/layout-menu
    */
-  title: 'Echo Admin',
+  title: '花小猪打车运营后台',
   layout: {
     ...defaultSettings,
     // ProLayout 会用 `menu.<name>` locale key 翻译路由名。
@@ -155,7 +155,7 @@ export default defineConfig({
     configProvider: {
       theme: {
         token: {
-          colorPrimary: '#1677ff',
+          colorPrimary: '#ff7d41',
           borderRadius: 8,
           // antd v6 默认控件高度 30px 偏紧，按钮/输入框文字缺少呼吸空间，全局放宽到 36。
           controlHeight: 36,
@@ -183,6 +183,14 @@ export default defineConfig({
   headScripts: [
     // 解决首次加载时白屏的问题
     { src: join(PUBLIC_PATH, 'scripts/loading.js'), async: true },
+  ],
+  /**
+   * @name 浏览器标签图标与站点信息
+   */
+  links: [{ rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],
+  metas: [
+    { name: 'application-name', content: '花小猪打车运营后台' },
+    { name: 'description', content: '花小猪打车运营管理后台：用户、司机审核、订单、工单、计价派单与营销活动' },
   ],
 
   tailwindcss: {},

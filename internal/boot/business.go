@@ -2,8 +2,13 @@ package boot
 
 import (
 	"context"
+	"errors"
+	"os"
+	"strings"
+	"time"
 
 	"github.com/samber/do/v2"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 	"gorm.io/gorm"
 
 	accessmysql "github.com/NSObjects/echo-admin/internal/modules/access/adapters/mysql"
@@ -27,6 +32,9 @@ import (
 	identitydomain "github.com/NSObjects/echo-admin/internal/modules/identity/domain"
 	identityhttp "github.com/NSObjects/echo-admin/internal/modules/identity/http"
 	identityusecase "github.com/NSObjects/echo-admin/internal/modules/identity/usecase"
+	operationsmongo "github.com/NSObjects/echo-admin/internal/modules/operations/adapters/mongo"
+	operationshttp "github.com/NSObjects/echo-admin/internal/modules/operations/http"
+	operationsusecase "github.com/NSObjects/echo-admin/internal/modules/operations/usecase"
 	settingsmysql "github.com/NSObjects/echo-admin/internal/modules/settings/adapters/mysql"
 	settingsdomain "github.com/NSObjects/echo-admin/internal/modules/settings/domain"
 	settingshttp "github.com/NSObjects/echo-admin/internal/modules/settings/http"
@@ -49,7 +57,210 @@ func BusinessModules() []Module {
 		authModule(),
 		settingsModule(),
 		fileModule(),
+		operationsModule(),
 	}
+}
+
+func operationsModule() Module {
+	return NewModule("operations",
+		Provide(newOperationsStore),
+		Provide(newOperationsUsecase),
+		Provide(newOperationsAuditUsecase),
+		Provide(newOperationsOrderUsecase),
+		Provide(newOperationsTicketUsecase),
+		Provide(newOperationsTicketSweeper),
+		Provide(newOperationsMarketingUsecase),
+		Provide(newOperationsPricingUsecase),
+		Provide(newOperationsDispatchUsecase),
+		Provide(newOperationsPoolUsecase),
+		Provide(newOperationsWithdrawalUsecase),
+		Provide(newOperationsHandler),
+		Route(operationshttp.Register),
+	)
+}
+
+// startupMongo resolves the shared MongoDB database resource for a module
+// store. The database name comes from the normalized [mongodb] config.
+func startupMongo(i do.Injector) (context.Context, *mongo.Database, error) {
+	ctx, err := do.Invoke[context.Context](i)
+	if err != nil {
+		return nil, nil, err
+	}
+	resources, err := do.Invoke[*Resources](i)
+	if err != nil {
+		return nil, nil, err
+	}
+	client, ok := resources.MongoDB()
+	if !ok {
+		return nil, nil, errors.New("mongodb is disabled but required by a module")
+	}
+	cfg, err := do.Invoke[configs.Config](i)
+	if err != nil {
+		return nil, nil, err
+	}
+	if cfg.MongoDB.Database == "" {
+		return nil, nil, errors.New("mongodb database name is empty")
+	}
+	return ctx, client.Database(cfg.MongoDB.Database), nil
+}
+
+func newOperationsStore(i do.Injector) (*operationsmongo.Store, error) {
+	ctx, db, err := startupMongo(i)
+	if err != nil {
+		return nil, err
+	}
+	return operationsmongo.NewStore(ctx, db)
+}
+
+func newOperationsUsecase(i do.Injector) (*operationsusecase.Usecase, error) {
+	store, err := do.Invoke[*operationsmongo.Store](i)
+	if err != nil {
+		return nil, err
+	}
+	return operationsusecase.New(store), nil
+}
+
+func newOperationsAuditUsecase(i do.Injector) (*operationsusecase.AuditUsecase, error) {
+	store, err := do.Invoke[*operationsmongo.Store](i)
+	if err != nil {
+		return nil, err
+	}
+	return operationsusecase.NewAudit(store), nil
+}
+
+func newOperationsOrderUsecase(i do.Injector) (*operationsusecase.OrderUsecase, error) {
+	store, err := do.Invoke[*operationsmongo.Store](i)
+	if err != nil {
+		return nil, err
+	}
+	return operationsusecase.NewOrder(store), nil
+}
+
+// newOperationsWithdrawalUsecase 提现审批：读共享库提现单，命令转发打车网关。
+func newOperationsWithdrawalUsecase(i do.Injector) (*operationsusecase.WithdrawalActionUsecase, error) {
+	_, db, err := startupMongo(i)
+	if err != nil {
+		return nil, err
+	}
+	// 主项目网关地址：默认本地联调端口，可用环境变量覆盖。
+	gateway := os.Getenv("MASTER_GATEWAY_BASE_URL")
+	if strings.TrimSpace(gateway) == "" {
+		gateway = "http://127.0.0.1:8080"
+	}
+	return operationsusecase.NewWithdrawal(operationsmongo.NewWithdrawalStore(db), gateway), nil
+}
+
+func newOperationsTicketUsecase(i do.Injector) (*operationsusecase.TicketUsecase, error) {
+	store, err := do.Invoke[*operationsmongo.Store](i)
+	if err != nil {
+		return nil, err
+	}
+	return operationsusecase.NewTicket(store), nil
+}
+
+// newOperationsTicketSweeper starts the ticket deadline sweeper. It implements
+// do.Shutdowner, so the container stops the loop on shutdown.
+func newOperationsTicketSweeper(i do.Injector) (*operationsusecase.TicketSweeper, error) {
+	uc, err := do.Invoke[*operationsusecase.TicketUsecase](i)
+	if err != nil {
+		return nil, err
+	}
+	sweeper := operationsusecase.NewTicketSweeper(uc, nil)
+	sweeper.Start()
+	return sweeper, nil
+}
+
+// newOperationsMarketingUsecase builds the marketing centre and makes sure the
+// collections it owns carry their indexes. Index creation is idempotent, so a
+// restart never rewrites anything; coupon_templates and coupons already hold
+// business-side documents, hence the sparse unique indexes.
+func newOperationsMarketingUsecase(i do.Injector) (*operationsusecase.MarketingUsecase, error) {
+	store, err := do.Invoke[*operationsmongo.Store](i)
+	if err != nil {
+		return nil, err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	if err := store.EnsureMarketingIndexes(ctx); err != nil {
+		return nil, err
+	}
+	return operationsusecase.NewMarketing(store), nil
+}
+
+// newOperationsPricingUsecase 计价规则（A05）：价格改错会波及全城订单，
+// 所以集合要有「城市+车型+区域+版本」的唯一索引兜住并发发版。
+func newOperationsPricingUsecase(i do.Injector) (*operationsusecase.PricingUsecase, error) {
+	store, err := do.Invoke[*operationsmongo.Store](i)
+	if err != nil {
+		return nil, err
+	}
+	return operationsusecase.NewPricing(store), nil
+}
+
+// newOperationsDispatchUsecase 派单策略（A06）。
+func newOperationsDispatchUsecase(i do.Injector) (*operationsusecase.DispatchUsecase, error) {
+	store, err := do.Invoke[*operationsmongo.Store](i)
+	if err != nil {
+		return nil, err
+	}
+	return operationsusecase.NewDispatch(store), nil
+}
+
+// newOperationsPoolUsecase 拼车与特价（A09）。
+func newOperationsPoolUsecase(i do.Injector) (*operationsusecase.PoolUsecase, error) {
+	store, err := do.Invoke[*operationsmongo.Store](i)
+	if err != nil {
+		return nil, err
+	}
+	return operationsusecase.NewPool(store), nil
+}
+
+func newOperationsHandler(i do.Injector) (*operationshttp.Handler, error) {
+	uc, err := do.Invoke[*operationsusecase.Usecase](i)
+	if err != nil {
+		return nil, err
+	}
+	audits, err := do.Invoke[*operationsusecase.AuditUsecase](i)
+	if err != nil {
+		return nil, err
+	}
+	orders, err := do.Invoke[*operationsusecase.OrderUsecase](i)
+	if err != nil {
+		return nil, err
+	}
+	tickets, err := do.Invoke[*operationsusecase.TicketUsecase](i)
+	if err != nil {
+		return nil, err
+	}
+	marketing, err := do.Invoke[*operationsusecase.MarketingUsecase](i)
+	if err != nil {
+		return nil, err
+	}
+	// 扫描器在这里被解析一次，确保容器里那个实例已经启动。
+	if _, err := do.Invoke[*operationsusecase.TicketSweeper](i); err != nil {
+		return nil, err
+	}
+	pricing, err := do.Invoke[*operationsusecase.PricingUsecase](i)
+	if err != nil {
+		return nil, err
+	}
+	dispatch, err := do.Invoke[*operationsusecase.DispatchUsecase](i)
+	if err != nil {
+		return nil, err
+	}
+	pool, err := do.Invoke[*operationsusecase.PoolUsecase](i)
+	if err != nil {
+		return nil, err
+	}
+	audit, err := do.Invoke[*auditusecase.Usecase](i)
+	if err != nil {
+		return nil, err
+	}
+	withdrawals, err := do.Invoke[*operationsusecase.WithdrawalActionUsecase](i)
+	if err != nil {
+		return nil, err
+	}
+	return operationshttp.New(uc, audits, orders, tickets, marketing, pricing, dispatch, pool, withdrawals, oprec.New(audit)), nil
 }
 
 func setupModule() Module {
