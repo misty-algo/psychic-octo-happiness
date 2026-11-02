@@ -65,6 +65,15 @@ type issueCouponsRequest struct {
 	PassengerIDs []string `json:"passenger_ids" validate:"required,min=1,max=1000,dive,required"`
 }
 
+// publishCouponsRequest 是投放领券中心的请求：一批无主券码。
+type publishCouponsRequest struct {
+	Name         string `json:"name" validate:"omitempty,max=40"`
+	FaceValueFen int64  `json:"face_value_fen" validate:"required,gt=0"`
+	ThresholdFen int64  `json:"threshold_fen" validate:"omitempty,gte=0"`
+	Count        int    `json:"count" validate:"omitempty,gte=1,lte=500"`
+	ExpireAt     string `json:"expire_at" validate:"required"`
+}
+
 // subsidyConfigRequest 是补贴活动的结构化规则（A08）。
 type subsidyConfigRequest struct {
 	TriggerType  string `json:"trigger_type" validate:"required,oneof=per_order time_period task"`
@@ -284,6 +293,44 @@ func (h *Handler) IssueCoupons(c *echo.Context) error {
 		detail = fmt.Sprintf("发放优惠券：%s 失败（%v）", batchNo, opErr)
 	}
 	if auditErr := h.audit.Record(c, "issue_coupons", "ops_marketing", batchNo, detail, opErr); auditErr != nil {
+		return auditErr
+	}
+	if opErr != nil {
+		return opErr
+	}
+	return httpresp.OK(c, output)
+}
+
+// PublishPublicCoupons 投放一批公开券到乘客端领券中心。
+func (h *Handler) PublishPublicCoupons(c *echo.Context) error {
+	operatorID, err := requestctx.RequireUserID(c.Request().Context())
+	if err != nil {
+		return err
+	}
+	var req publishCouponsRequest
+	if err := httpreq.BindAndValidate(c, &req); err != nil {
+		return err
+	}
+	output, opErr := h.marketing.PublishPublicCoupons(c.Request().Context(), usecase.PublishPublicCouponsInput{
+		Name:         req.Name,
+		FaceValueFen: req.FaceValueFen,
+		ThresholdFen: req.ThresholdFen,
+		Count:        req.Count,
+		ExpireAt:     req.ExpireAt,
+		OperatorID:   operatorID,
+		RequestID:    requestctx.GetRequestID(c.Request().Context()),
+	})
+	detail := "投放领券中心"
+	target := ""
+	if opErr == nil {
+		detail = fmt.Sprintf("投放领券中心：%d 张（%s）", output.Count, strings.Join(output.CouponNos, ","))
+		if len(output.CouponNos) > 0 {
+			target = output.CouponNos[0]
+		}
+	} else {
+		detail = fmt.Sprintf("投放领券中心：失败（%v）", opErr)
+	}
+	if auditErr := h.audit.Record(c, "publish_public_coupons", "ops_marketing", target, detail, opErr); auditErr != nil {
 		return auditErr
 	}
 	if opErr != nil {

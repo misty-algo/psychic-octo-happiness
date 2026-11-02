@@ -85,6 +85,8 @@ func Register(group *echo.Group, handler *Handler) {
 	group.POST("/ops/marketing/coupon-batches/:batch_no/issue", handler.IssueCoupons)
 	group.POST("/ops/marketing/coupon-batches/:batch_no/commands", handler.ExecuteBatchCommand)
 	group.GET("/ops/marketing/coupons", handler.ListIssuedCoupons)
+	// 投放领券中心：生成一批无主券码，乘客端先到先得领取。
+	group.POST("/ops/marketing/coupons/publish", handler.PublishPublicCoupons)
 
 	group.GET("/ops/marketing/campaigns", handler.ListCampaigns)
 	group.POST("/ops/marketing/campaigns", handler.CreateCampaign)

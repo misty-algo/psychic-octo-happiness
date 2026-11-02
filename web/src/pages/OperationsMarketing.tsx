@@ -127,6 +127,8 @@ const Marketing: React.FC = () => {
   const [createCampaignOpen, setCreateCampaignOpen] = useState(false);
   const [issueTarget, setIssueTarget] = useState<CouponBatch | undefined>();
   const [issueResult, setIssueResult] = useState<IssueResult | undefined>();
+  // 公开投放：生成无主券码到领券中心，乘客先到先得。
+  const [publishOpen, setPublishOpen] = useState(false);
   // A08 补贴台账抽屉：目标活动 + 汇总 + 台账记录。
   const [subsidyTarget, setSubsidyTarget] = useState<Campaign | undefined>();
   const [subsidySummary, setSubsidySummary] = useState<CampaignSubsidySummary | undefined>();
@@ -555,6 +557,15 @@ const Marketing: React.FC = () => {
                 actionRef={couponRef}
                 rowKey={(row) => row.coupon_no || `${row.batch_no}${row.issued_at}`}
                 search={{ labelWidth: 'auto' }}
+                toolBarRender={() =>
+                  canWrite
+                    ? [
+                        <Button key="publish" type="primary" onClick={() => setPublishOpen(true)}>
+                          投放领券中心
+                        </Button>,
+                      ]
+                    : undefined
+                }
                 request={async (params) => {
                   const res = await api.listIssuedCoupons({
                     page: params.current,
@@ -1000,6 +1011,75 @@ const Marketing: React.FC = () => {
             超过总量、超过库存、达到每人限领或券互斥的乘客会被挡下并在结果里列出
           </span>
         )}
+      </ModalForm>
+
+      <ModalForm<{
+        name: string;
+        face_value_fen: number;
+        threshold_fen: number;
+        count: number;
+        expire_at: string;
+      }>
+        key="publish-claim-center"
+        title="投放领券中心"
+        width={480}
+        open={publishOpen}
+        onOpenChange={setPublishOpen}
+        modalProps={{ destroyOnHidden: true }}
+        onFinish={async (values) => {
+          try {
+            const result = await api.publishCoupons({
+              name: values.name,
+              face_value_fen: values.face_value_fen,
+              threshold_fen: values.threshold_fen ?? 0,
+              count: values.count,
+              expire_at: dayjs(values.expire_at).format('YYYY-MM-DD HH:mm:ss'),
+            });
+            message.success(
+              `已投放 ${result.count} 张到领券中心，乘客先到先得（券码 ${result.coupon_nos?.[0] ?? ''} 等）`,
+            );
+            couponRef.current?.reload();
+            return true;
+          } catch (error: any) {
+            message.error(error?.message ?? '投放失败');
+            return false;
+          }
+        }}
+      >
+        <ProFormText
+          name="name"
+          label="券名称"
+          placeholder="乘客端展示，默认：打车券"
+          fieldProps={{ maxLength: 40 }}
+        />
+        <ProFormDigit
+          name="face_value_fen"
+          label="面值（分）"
+          placeholder="1000 表示 10 元"
+          min={1}
+          rules={[{ required: true, message: '请填写面值' }]}
+        />
+        <ProFormDigit
+          name="threshold_fen"
+          label="使用门槛（分）"
+          placeholder="0 表示无门槛"
+          min={0}
+          initialValue={0}
+          tooltip="门槛必须大于面值，例如面值 500 分（5 元）可设门槛 2000 分（满 20 可用）"
+        />
+        <ProFormDigit
+          name="count"
+          label="投放张数"
+          min={1}
+          max={500}
+          initialValue={20}
+          tooltip="每张一个独立券码，乘客领取时先到先得，领完即止"
+        />
+        <ProFormDatePicker
+          name="expire_at"
+          label="券到期时间"
+          rules={[{ required: true, message: '请选择到期时间' }]}
+        />
       </ModalForm>
 
       <Modal

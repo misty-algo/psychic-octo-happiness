@@ -27,6 +27,7 @@ type couponDoc struct {
 	CouponNo     string        `bson:"couponNo,omitempty"`
 	TemplateNo   string        `bson:"templateNo,omitempty"`
 	TemplateID   bson.ObjectID `bson:"templateId,omitempty"`
+	Name         string        `bson:"name,omitempty"`
 	BatchNo      string        `bson:"batchNo,omitempty"`
 	PassengerID  bson.ObjectID `bson:"passengerId"`
 	State        string        `bson:"state"`
@@ -56,6 +57,7 @@ func (d couponDoc) toDomain() domain.IssuedCoupon {
 	return domain.IssuedCoupon{
 		CouponNo:     couponNo,
 		TemplateNo:   templateNo,
+		Name:         d.Name,
 		BatchNo:      d.BatchNo,
 		PassengerID:  d.PassengerID.Hex(),
 		State:        d.State,
@@ -82,6 +84,7 @@ func couponFromDomain(c domain.IssuedCoupon) couponDoc {
 	doc := couponDoc{
 		CouponNo:     c.CouponNo,
 		TemplateNo:   c.TemplateNo,
+		Name:         c.Name,
 		BatchNo:      c.BatchNo,
 		State:        c.State,
 		FaceValueFen: c.FaceValueFen,

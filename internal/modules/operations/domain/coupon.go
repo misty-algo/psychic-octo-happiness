@@ -184,6 +184,9 @@ type IssuedCoupon struct {
 	CouponNo     string     `json:"coupon_no"`
 	TemplateNo   string     `json:"template_no"`
 	TemplateName string     `json:"template_name"`
+	// Name 为券的展示名称（领券中心直接展示）；定向发放的券继承模板名，
+	// 公开投放的券由运营填写，历史券可能为空。
+	Name         string     `json:"name"`
 	BatchNo      string     `json:"batch_no"`
 	PassengerID  string     `json:"passenger_id"`
 	Passenger    string     `json:"passenger_name"`

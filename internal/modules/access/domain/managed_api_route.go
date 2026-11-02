@@ -126,6 +126,7 @@ var managedAPIRouteCatalog = [...]ManagedAPIRouteDefinition{
 	{Method: "POST", Pattern: "/api/ops/marketing/coupon-batches/:batch_no/issue", Description: "发放优惠券", Group: "ops", Permission: PermissionOpsMarketingWrite},
 	{Method: "POST", Pattern: "/api/ops/marketing/coupon-batches/:batch_no/commands", Description: "券批次停止/结束", Group: "ops", Permission: PermissionOpsMarketingWrite},
 	{Method: "GET", Pattern: "/api/ops/marketing/coupons", Description: "已发放券查询", Group: "ops", Permission: PermissionOpsMarketingRead},
+	{Method: "POST", Pattern: "/api/ops/marketing/coupons/publish", Description: "投放领券中心", Group: "ops", Permission: PermissionOpsMarketingWrite},
 
 	{Method: "GET", Pattern: "/api/ops/marketing/campaigns", Description: "营销活动列表", Group: "ops", Permission: PermissionOpsMarketingRead},
 	{Method: "POST", Pattern: "/api/ops/marketing/campaigns", Description: "新建营销活动", Group: "ops", Permission: PermissionOpsMarketingWrite},

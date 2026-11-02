@@ -667,6 +667,13 @@ export type IssueResult = {
   degraded: boolean;
 };
 
+// PublishPublicCouponsResult 是投放领券中心的回显：生成的券码列表。
+export type PublishPublicCouponsResult = {
+  count: number;
+  coupon_nos: string[];
+  expire_at: string;
+};
+
 export type MarketingListParams = ListParams & {
   keyword?: string;
   state?: string;
@@ -755,6 +762,21 @@ export async function listIssuedCoupons(
   return request<Envelope<IssuedCoupon[]>>('/api/ops/marketing/coupons', {
     params,
   });
+}
+
+// publishCoupons 投放一批公开券到乘客端领券中心（先到先得）。
+export async function publishCoupons(body: {
+  name?: string;
+  face_value_fen: number;
+  threshold_fen: number;
+  count?: number;
+  expire_at: string;
+}): Promise<PublishPublicCouponsResult> {
+  const response = await request<Envelope<PublishPublicCouponsResult>>(
+    '/api/ops/marketing/coupons/publish',
+    { method: 'POST', data: body },
+  );
+  return response.data;
 }
 
 export async function listCampaigns(
