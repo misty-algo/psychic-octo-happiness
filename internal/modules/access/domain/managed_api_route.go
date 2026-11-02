@@ -111,6 +111,11 @@ var managedAPIRouteCatalog = [...]ManagedAPIRouteDefinition{
 	{Method: "GET", Pattern: "/api/ops/orders/:order_no", Description: "订单穿透详情", Group: "ops", Permission: PermissionOpsOrderRead},
 	{Method: "POST", Pattern: "/api/ops/orders/:order_no/commands", Description: "订单业务命令", Group: "ops", Permission: PermissionOpsOrderCommand},
 
+	{Method: "GET", Pattern: "/api/ops/withdrawals", Description: "提现审批队列", Group: "ops", Permission: PermissionOpsOrderRead},
+	{Method: "POST", Pattern: "/api/ops/withdrawals/:id/approve", Description: "通过提现申请", Group: "ops", Permission: PermissionOpsOrderCommand},
+	{Method: "POST", Pattern: "/api/ops/withdrawals/:id/reject", Description: "驳回提现申请", Group: "ops", Permission: PermissionOpsOrderCommand},
+	{Method: "POST", Pattern: "/api/ops/withdrawals/:id/pay", Description: "标记提现打款完成", Group: "ops", Permission: PermissionOpsOrderCommand},
+
 	{Method: "GET", Pattern: "/api/ops/tickets", Description: "工单处理台列表", Group: "ops", Permission: PermissionOpsTicketRead},
 	{Method: "GET", Pattern: "/api/ops/tickets/:ticket_no", Description: "工单详情", Group: "ops", Permission: PermissionOpsTicketRead},
 	{Method: "POST", Pattern: "/api/ops/tickets/:ticket_no/commands", Description: "工单状态命令", Group: "ops", Permission: PermissionOpsTicketHandle},
