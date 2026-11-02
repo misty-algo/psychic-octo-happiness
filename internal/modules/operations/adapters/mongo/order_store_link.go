@@ -27,16 +27,17 @@ func (s *Store) ListOrderTickets(ctx context.Context, orderIDs []string) (map[st
 	defer cur.Close(ctx)
 	for cur.Next(ctx) {
 		var doc struct {
-			TicketNo  string        `bson:"ticketNo"`
-			OrderID   bson.ObjectID `bson:"orderId"`
-			Type      string        `bson:"type"`
-			State     string        `bson:"state"`
-			CreatedAt time.Time     `bson:"createdAt"`
+			TicketNo  string    `bson:"ticketNo"`
+			OrderID   bson.RawValue `bson:"orderId"`
+			Type      string    `bson:"type"`
+			State     string    `bson:"state"`
+			CreatedAt time.Time `bson:"createdAt"`
 		}
 		if err := cur.Decode(&doc); err != nil {
 			return nil, fmt.Errorf("decode order ticket: %w", err)
 		}
-		out[doc.OrderID.Hex()] = append(out[doc.OrderID.Hex()], domain.TicketBrief{
+		key := flexIDString(doc.OrderID)
+		out[key] = append(out[key], domain.TicketBrief{
 			TicketNo:  doc.TicketNo,
 			Type:      doc.Type,
 			State:     doc.State,

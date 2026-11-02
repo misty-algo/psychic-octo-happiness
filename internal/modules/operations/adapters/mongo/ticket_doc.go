@@ -15,7 +15,7 @@ import (
 type ticketDoc struct {
 	ID            bson.ObjectID `bson:"_id"`
 	TicketNo      string        `bson:"ticketNo"`
-	OrderID       bson.ObjectID `bson:"orderId"`
+	OrderID       bson.RawValue `bson:"orderId"`
 	OrderNo       string        `bson:"orderNo"`
 	Type          string        `bson:"type"`
 	Group         string        `bson:"group"`
@@ -83,7 +83,7 @@ func (d ticketDoc) toDomain() domain.Ticket {
 	ticket := domain.Ticket{
 		ID:                  d.ID.Hex(),
 		TicketNo:            d.TicketNo,
-		OrderID:             d.OrderID.Hex(),
+		OrderID:             flexIDString(d.OrderID),
 		OrderNo:             d.OrderNo,
 		Type:                d.Type,
 		Group:               d.Group,
