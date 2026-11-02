@@ -40,3 +40,7 @@ go.work.sum
 /.backend.err
 /.playwright-cli/
 a07-*.png
+
+# local dev build output
+.build/
+
