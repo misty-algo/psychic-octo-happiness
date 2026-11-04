@@ -1,3 +1,4 @@
+import { history } from '@umijs/max';
 import { message } from 'antd';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { errorConfig, formatApiError } from './requestErrorConfig';
@@ -114,6 +115,36 @@ describe('requestErrorConfig', () => {
     expect(mockReplace).toHaveBeenCalledWith(
       `/user/login?redirect=${encodeURIComponent('/admins?page=1#top')}`,
     );
+  });
+
+  it('shows the backend credential message instead of session-expired when the login request fails', () => {
+    vi.setSystemTime(new Date('2026-08-28T10:00:10Z'));
+    const pathname = history.location.pathname;
+    history.location.pathname = '/user/login';
+    try {
+      errorHandler?.(
+        axiosError(401, { code: 100401, message: '用户名或密码错误' }),
+        {},
+      );
+
+      expect(message.error).toHaveBeenCalledWith('用户名或密码错误');
+      expect(mockReplace).not.toHaveBeenCalled();
+    } finally {
+      history.location.pathname = pathname;
+    }
+  });
+
+  it('keeps the session-expired text for a 401 without a specific message on the login page', () => {
+    vi.setSystemTime(new Date('2026-08-28T10:00:20Z'));
+    const pathname = history.location.pathname;
+    history.location.pathname = '/user/login';
+    try {
+      errorHandler?.(axiosError(401), {});
+
+      expect(message.error).toHaveBeenCalledWith('登录已过期，请重新登录');
+    } finally {
+      history.location.pathname = pathname;
+    }
   });
 
   it('redirects to setup on system-uninitialized business errors', () => {

@@ -204,6 +204,17 @@ export const errorConfig: RequestConfig = {
       }
 
       if (status === 401 || envelope?.code === unauthorizedCode) {
+        // 登录页发起的 401 是凭据校验失败（后端返回如"用户名或密码错误"），
+        // 不是会话过期；透出后端文案，避免误导用户以为自己被登出。
+        const credentialMessage = envelope?.message?.trim();
+        if (
+          history.location.pathname === loginPath &&
+          credentialMessage &&
+          credentialMessage.toLowerCase() !== 'unauthorized'
+        ) {
+          notifyError(formatApiError(envelope?.code, credentialMessage));
+          return;
+        }
         notifyError('登录已过期，请重新登录');
         if (history.location.pathname !== loginPath) {
           history.replace(
