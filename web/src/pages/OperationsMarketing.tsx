@@ -42,6 +42,10 @@ import * as api from '@/services/operations';
 
 /** 分转元：金额一律按分存、按元显示。 */
 const yuan = (fen?: number) => ((fen ?? 0) / 100).toFixed(2);
+
+// 发布模板时同步投放到领券中心的券数量。领券中心按张展示、先到先得，
+// 无需一次性把模板库存全铺开，后续可继续用「投放领券中心」补投。
+const CLAIM_CENTER_BATCH = 20;
 const fmt = (value?: string) =>
   value ? dayjs(value).format('YYYY-MM-DD HH:mm') : '-';
 
@@ -199,12 +203,31 @@ const Marketing: React.FC = () => {
           <Space size={4}>
             {row.state === '草稿' && (
               <Popconfirm
-                title="发布后即可发放，确认发布？"
+                title="发布后会同步投放一批券到乘客端领券中心，确认发布？"
                 onConfirm={async () => {
                   await api.executeTemplateCommand(row.template_no, {
                     command: 'publish',
                   });
-                  message.success('已发布');
+                  // 领券中心读的是共享 coupons 集合里的可领券实例；只把模板状态
+                  // 改成「已发布」不会产生券，乘客端会一直显示「暂无可领取的券」。
+                  try {
+                    await api.publishCoupons({
+                      name: row.name,
+                      face_value_fen: Number(row.face_value_fen) || 0,
+                      threshold_fen: Number(row.threshold_fen) || 0,
+                      count: CLAIM_CENTER_BATCH,
+                      expire_at: dayjs(row.valid_end).format(
+                        'YYYY-MM-DD HH:mm:ss',
+                      ),
+                    });
+                    message.success(
+                      `已发布，并同步投放 ${CLAIM_CENTER_BATCH} 张券到领券中心`,
+                    );
+                  } catch (error) {
+                    message.warning(
+                      `模板已发布，但同步投放失败：${(error as Error).message}，请用「投放领券中心」补发`,
+                    );
+                  }
                   reloadAll();
                 }}
               >
